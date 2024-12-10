@@ -1,5 +1,5 @@
 [package]
-name = "bevy_pipeline"
+name = "vkxl" # name determined by a mispelling of voxel i though sounded neat
 version = "0.1.0"
 edition = "2021"
 
