@@ -3,7 +3,12 @@
 // This shader goes with the `custom_phase_item` example. It demonstrates how to
 // enqueue custom rendering logic in a `RenderPhase`.
 
-@group(0) @binding(0) var<storage, read> triangles: array<mat4x4f>;
+#import bevy_render::view::View
+
+@group(0) @binding(0)
+var<uniform> view: View;
+
+@group(1) @binding(0) var<storage, read> triangles: array<mat4x4f>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
@@ -33,6 +38,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     vertex_pos *= triangles[index / 3];
     let transform = triangles[index / 3];
     vertex_pos *= 0.25;
+    vertex_pos *= view.view_from_world;
     vertex_output.clip_position = vertex_pos;
     vertex_output.color = vec3f(
       transform[0].x,

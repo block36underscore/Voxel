@@ -1,23 +1,12 @@
-//! Demonstrates how to enqueue custom draw commands in a render phase.
-//!
-//! This example shows how to use the built-in
-//! [`bevy_render::render_phase::BinnedRenderPhase`] functionality with a
-//! custom [`RenderCommand`] to allow inserting arbitrary GPU drawing logic
-//! into Bevy's pipeline. This is not the only way to add custom rendering code
-//! into Bevy—render nodes are another, lower-level method—but it does allow
-//! for better reuse of parts of Bevy's built-in mesh rendering logic.
+mod shared;
 
-use bevy::{
-    math::Vec3A,
-    prelude::*,
-    render::primitives::Aabb,
-};
-use vkxl::render::{VoxelRendererPlugin, PulledCube};
+use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb};
+use shared::SharedUtilitiesPlugin;
+use vkxl::render::{PulledCube, VoxelRendererPlugin};
 
 fn main() {
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins)
-        .add_plugins(VoxelRendererPlugin)
+    app.add_plugins((DefaultPlugins, VoxelRendererPlugin, SharedUtilitiesPlugin))
         .add_systems(Startup, setup);
         // Make sure to tell Bevy to check our entity for visibility. Bevy won't
         // do this by default, for efficiency reasons.
@@ -62,6 +51,3 @@ fn setup(mut commands: Commands) {
         Transform::from_xyz(0.0, 0.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
     ));
 }
-
-
-

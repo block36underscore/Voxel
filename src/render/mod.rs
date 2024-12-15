@@ -1,4 +1,4 @@
-use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, prelude::{Component, IntoSystemConfigs, Transform, ViewVisibility}, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, view::{self, VisibilitySystems}, Render, RenderApp, RenderSet}};
+use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, prelude::{Component, IntoSystemConfigs, Transform, ViewVisibility}, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, view::{self, ViewUniforms, VisibilitySystems}, Render, RenderApp, RenderSet}};
 use buffers::{prepare_custom_phase_item_buffers, update_buffers, PulledCubesBuffers};
 use pipeline::{queue_custom_phase_item, CubePullingPipeline, DrawCustomPhaseItemCommands, WithCustomRenderedEntity};
 

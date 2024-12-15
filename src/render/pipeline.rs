@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, core_pipeline::core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, ecs::{query::ROQueryItem, system::{lifetimeless::SRes, SystemParamItem}}, prelude::*, render::{render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, view::{ExtractedView, RenderVisibleEntities}}};
+use bevy::{asset::Handle, core_pipeline::core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, ecs::{query::ROQueryItem, system::{lifetimeless::{Read, SRes}, SystemParamItem}}, prelude::*, render::{render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, ShaderType, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, view::{ExtractedView, RenderVisibleEntities, ViewUniform, ViewUniformOffset}}};
 
 use super::{buffers::PulledCubesBuffers, PulledCube};
 
@@ -12,6 +12,8 @@ pub(crate) struct CubePullingPipeline {
     pub(crate) shader: Handle<Shader>,
     pub(crate) layout: BindGroupLayout,
     pub(crate) bind_group: BindGroup,
+    pub(crate) view_layout: BindGroupLayout,
+    pub(crate) view_bind_group: Option<BindGroup>,
 }
 
 impl SpecializedRenderPipeline for CubePullingPipeline {
@@ -20,7 +22,7 @@ impl SpecializedRenderPipeline for CubePullingPipeline {
     fn specialize(&self, msaa: Self::Key) -> RenderPipelineDescriptor {
         RenderPipelineDescriptor {
             label: Some("custom render pipeline".into()),
-            layout: vec![self.layout.clone()],
+            layout: vec![self.view_layout.clone(), self.layout.clone()],
             push_constant_ranges: vec![],
             vertex: VertexState {
                 shader: self.shader.clone(),
@@ -90,11 +92,30 @@ impl FromWorld for CubePullingPipeline {
             &layout, 
             buffers.instances.buffer().unwrap()
         );
-        
+
+        let view_layout_entries = vec![
+            BindGroupLayoutEntry {
+                binding: 0,
+                visibility: ShaderStages::all(),
+                ty: BindingType::Buffer {
+                    ty: BufferBindingType::Uniform,
+                    has_dynamic_offset: true,
+                    min_binding_size: Some(ViewUniform::min_size()),
+                },
+                count: None,
+            }];
+
+        let view_layout = render_device.create_bind_group_layout(
+            Some("view_layout"),
+            &view_layout_entries,
+        );
+
         CubePullingPipeline {
             shader: asset_server.load("shaders/vertex_pulled_cubes.wgsl"),
             layout,
             bind_group,
+            view_layout,
+            view_bind_group: None,
         }
     }
 }
@@ -168,7 +189,7 @@ pub(crate) fn create_bind_group(
     buffer: &Buffer,
 ) -> BindGroup {
     render_device.create_bind_group(
-        "instance_data", 
+        "cube_instance_data", 
         layout, 
         &[
             BindGroupEntry {
@@ -185,19 +206,36 @@ pub(crate) fn create_bind_group(
     )
 }
 
+pub(crate) fn create_view_bind_group(
+    render_device: &RenderDevice, 
+    layout: &BindGroupLayout, 
+    binding_resource: &BindingResource,
+) -> BindGroup {
+    render_device.create_bind_group(
+        "view_uniform", 
+        layout, 
+        &[
+            BindGroupEntry {
+                binding: 0,
+                resource: binding_resource.clone(), 
+            }
+        ]
+    )
+}
+
 impl<P> RenderCommand<P> for DrawPulledCubesPhaseItem
 where
     P: PhaseItem,
 {
     type Param = (SRes<PulledCubesBuffers>, SRes<CubePullingPipeline>);
 
-    type ViewQuery = ();
+    type ViewQuery = Read<ViewUniformOffset>;
 
     type ItemQuery = ();
 
     fn render<'w>(
         _: &P,
-        _: ROQueryItem<'w, Self::ViewQuery>,
+        view_uniform_offset: ROQueryItem<'w, Self::ViewQuery>,
         _: Option<ROQueryItem<'w, Self::ItemQuery>>,
         resources: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
@@ -205,10 +243,13 @@ where
         // Borrow check workaround.
         let custom_phase_item_buffers = resources.0.into_inner();
         let pipeline = resources.1.into_inner();
+        if let Some(view_bind_group) = &pipeline.view_bind_group {
+            pass.set_bind_group(0, view_bind_group, &[view_uniform_offset.offset]);
+        } else {
+            panic!("No view bind group in vertex pulled cube pipeline")
+        }
 
-        
-
-        pass.set_bind_group(0, 
+        pass.set_bind_group(1, 
             &pipeline.bind_group, &[]);
 
         // Draw one triangle (3 vertices).
