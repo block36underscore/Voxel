@@ -246,7 +246,7 @@ where
         if let Some(view_bind_group) = &pipeline.view_bind_group {
             pass.set_bind_group(0, view_bind_group, &[view_uniform_offset.offset]);
         } else {
-            panic!("No view bind group in vertex pulled cube pipeline")
+            return RenderCommandResult::Skip;
         }
 
         pass.set_bind_group(1, 
