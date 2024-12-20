@@ -8,19 +8,20 @@ fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, VoxelRendererPlugin, SharedUtilitiesPlugin))
         .add_systems(Startup, setup);
-        // Make sure to tell Bevy to check our entity for visibility. Bevy won't
-        // do this by default, for efficiency reasons.
-
+    // Make sure to tell Bevy to check our entity for visibility. Bevy won't
+    // do this by default, for efficiency reasons.
 
     // We make sure to add these to the render app, not the main app.
 
     app.run();
 }
 
-
-
 /// Spawns the objects in the scene.
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     // Spawn a single entity that has custom rendering. It'll be extracted into
     // the render world via [`ExtractComponent`].
     commands.spawn((
@@ -45,9 +46,9 @@ fn setup(mut commands: Commands) {
         PulledCube,
     ));
 
-    // Spawn the camera.
     commands.spawn((
-        Camera3d::default(),
-        Transform::from_xyz(1.0, 1.0, 1.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
+        MeshMaterial3d(materials.add(Color::WHITE)),
+        Transform::default(),
     ));
 }
