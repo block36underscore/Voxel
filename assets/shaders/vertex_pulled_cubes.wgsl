@@ -17,15 +17,67 @@ struct VertexOutput {
     @location(0) color: vec3<f32>,
 };
 
+const VERTICES = array<vec3f, 36>(
+
+// +X
+  
+  vec3f( 0.5,  0.5, -0.5),
+  vec3f( 0.5,  0.5,  0.5),
+  vec3f( 0.5, -0.5, -0.5),
+  vec3f( 0.5,  0.5,  0.5),
+  vec3f( 0.5, -0.5,  0.5),
+  vec3f( 0.5, -0.5, -0.5),
+  
+// -X
+  
+  vec3f(-0.5,  0.5, -0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f(-0.5,  0.5,  0.5),
+  vec3f(-0.5,  0.5,  0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f(-0.5, -0.5,  0.5),
+
+// +Y
+  
+  vec3f(-0.5, 0.5,  0.5),
+  vec3f( 0.5, 0.5,  0.5),
+  vec3f(-0.5, 0.5, -0.5),
+  vec3f( 0.5, 0.5,  0.5),
+  vec3f( 0.5, 0.5, -0.5),
+  vec3f(-0.5, 0.5, -0.5),
+
+// -Y
+  
+  vec3f(-0.5, -0.5,  0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f( 0.5, -0.5,  0.5),
+  vec3f( 0.5, -0.5,  0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f( 0.5, -0.5, -0.5),
+  
+  // +Z
+  
+  vec3f(-0.5,  0.5, 0.5),
+  vec3f( 0.5,  0.5, 0.5),
+  vec3f(-0.5, -0.5, 0.5),
+  vec3f( 0.5,  0.5, 0.5),
+  vec3f( 0.5, -0.5, 0.5),
+  vec3f(-0.5, -0.5, 0.5),
+  
+// -Z
+  
+  vec3f(-0.5,  0.5, -0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f( 0.5,  0.5, -0.5),
+  vec3f( 0.5,  0.5, -0.5),
+  vec3f(-0.5, -0.5, -0.5),
+  vec3f( 0.5, -0.5, -0.5),
+);
+
+const VERTEX_COUNT: u32 = 36;
+
 fn get_base_vertex(index: u32) -> vec4f {
-  let i = index % 3;
-  if (i == 0) {
-    return vec4f(0.1, 0.0, 0.0, 1.0);
-  } else if (i == 1) {
-    return vec4f(-0.1, 0.0, 0.0, 1.0);
-  } else {
-    return vec4f(0.0, 0.5, 0.0, 1.0);
-  }
+  return vec4f(VERTICES[index % VERTEX_COUNT], 1.0);
 }
 
 // The vertex shader entry point.
@@ -34,16 +86,18 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     // Use an orthographic projection.
     var vertex_output: VertexOutput;
     var vertex_pos: vec4f = get_base_vertex(index);
-    vertex_pos *= triangles[index / 3];
-    let transform = triangles[index / 3];
-    vertex_pos *= 0.25;
+    vertex_pos *= triangles[index / VERTEX_COUNT];
+    let transform = triangles[index / VERTEX_COUNT];
     vertex_pos = view.clip_from_world * vertex_pos;
     vertex_output.clip_position = vertex_pos;
-    vertex_output.color = vec3f(
-      transform[0].x,
-      transform[0].y,
-      transform[0].z,
-    );
+    let i = index % 3;
+    if (i == 0) {
+      vertex_output.color = vec3f(1.0, 0.0, 0.0);
+    } else if (i == 1) {
+      vertex_output.color = vec3f(0.0, 1.0, 0.0);
+    } if (i == 2) {
+      vertex_output.color = vec3f(0.0, 0.0, 1.0);
+    }
     return vertex_output;
 }
 

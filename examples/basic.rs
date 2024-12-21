@@ -37,7 +37,7 @@ fn setup(
 
     commands.spawn((
         Visibility::default(),
-        Transform::from_translation(Vec3::new(-0.5, 0.2, 0.0)),
+        Transform::from_translation(Vec3::new(-1.5, 0.2, 0.0)),
         // This `Aabb` is necessary for the visibility checks to work.
         Aabb {
             center: Vec3A::ZERO,

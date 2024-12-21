@@ -253,7 +253,7 @@ where
             &pipeline.bind_group, &[]);
 
         // Draw one triangle (3 vertices).
-        pass.draw(0..(custom_phase_item_buffers.instances.len() * 3) as u32, 0..1);
+        pass.draw(0..(custom_phase_item_buffers.instances.len() * 36) as u32, 0..1);
 
         RenderCommandResult::Success
     }
