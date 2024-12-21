@@ -48,8 +48,8 @@ impl SpecializedRenderPipeline for CubePullingPipeline {
             // changed.
             depth_stencil: Some(DepthStencilState {
                 format: CORE_3D_DEPTH_FORMAT,
-                depth_write_enabled: false,
-                depth_compare: CompareFunction::Always,
+                depth_write_enabled: true,
+                depth_compare: CompareFunction::Greater,
                 stencil: default(),
                 bias: default(),
             }),

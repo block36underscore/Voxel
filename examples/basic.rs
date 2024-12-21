@@ -19,8 +19,6 @@ fn main() {
 /// Spawns the objects in the scene.
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Spawn a single entity that has custom rendering. It'll be extracted into
     // the render world via [`ExtractComponent`].
@@ -44,11 +42,5 @@ fn setup(
             half_extents: Vec3A::splat(0.5),
         },
         PulledCube,
-    ));
-
-    commands.spawn((
-        Mesh3d(meshes.add(Cuboid::new(1.0, 1.0, 1.0))),
-        MeshMaterial3d(materials.add(Color::WHITE)),
-        Transform::default(),
     ));
 }
