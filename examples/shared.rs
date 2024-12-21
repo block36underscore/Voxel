@@ -100,11 +100,14 @@ pub struct Player;
 pub struct Camera;
 
 pub fn spawn_player(mut commands: Commands) {
+    let mut look_transform = Transform::from_xyz(5.0, 5.0, 5.0);
+    look_transform.look_at(Vec3::ZERO, Vec3::Y);
+    look_transform.translation = Vec3::ZERO;
     let camera = commands.spawn((
-        Camera, Camera3d::default()
+        Camera, Camera3d::default(), look_transform,
     )).id();
     let mut player = commands.spawn((
-        Transform::from_xyz(5.0, 5.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        Transform::from_xyz(5.0, 5.0, 5.0),
         Player,
         InputManagerBundle::with_map(setup_controls()),
     ));
@@ -123,7 +126,7 @@ pub fn handle_player_input(
 ) {
     let (action_state, mut player_transform) = player.single_mut();
     let mut camera_transform = camera.single_mut();
-    let (mut yaw, mut pitch, _) = camera_transform.rotation.to_euler(EulerRot::XYZ);
+    let (mut yaw, mut pitch, _) = camera_transform.rotation.to_euler(EulerRot::YXZ);
 
     // Movement Inputs
 
@@ -152,7 +155,7 @@ pub fn handle_player_input(
         pitch = pitch.clamp(-PI / 2.0, PI / 2.0);
 
         camera_transform.rotation = Quat::from_euler(
-            EulerRot::XYZ, 
+            EulerRot::YXZ, 
             yaw, pitch, 0.0
         );
     }
