@@ -1,7 +1,7 @@
-use bevy::{math::Mat4, prelude::{Commands, FromWorld, Query, Res, ResMut, Resource, Transform, ViewVisibility, World}, render::{render_resource::{BufferUsages, BufferVec, ShaderType}, renderer::{RenderDevice, RenderQueue}, view::ViewUniforms}};
+use bevy::{math::Mat4, pbr::{GpuLights, LightMeta, MeshPipeline}, prelude::{Commands, FromWorld, Query, Res, ResMut, Resource, Transform, ViewVisibility, World}, render::{render_resource::{BufferUsages, BufferVec, ShaderType}, renderer::{RenderDevice, RenderQueue}, view::ViewUniforms}};
 use bytemuck::{Pod, Zeroable};
 
-use super::{pipeline::{create_bind_group, create_view_bind_group, CubePullingPipeline}, PulledCube};
+use super::{pipeline::{create_bind_group, CubePullingPipeline}, PulledCube};
 
 #[derive(Resource)]
 pub(crate) struct PulledCubesBuffers {
@@ -20,7 +20,6 @@ pub(crate) fn update_buffers(
     render_queue: Res<RenderQueue>,
     mut pipeline: ResMut<CubePullingPipeline>,
     entities: Query<(&PulledCube, &Transform, &ViewVisibility)>,
-    view_uniforms: Res<ViewUniforms>,
 ) {
     buffers.instances.clear();
 
@@ -41,14 +40,6 @@ pub(crate) fn update_buffers(
         &pipeline.layout,
         buffers.instances.buffer().unwrap(),
     );
-    
-    if let Some(view_uniform_buffer) = view_uniforms.uniforms.binding() {
-        pipeline.view_bind_group = Some(create_view_bind_group(
-            &render_device, 
-            &pipeline.view_layout, 
-            &view_uniform_buffer,
-        ));
-    }
 }
 
 impl FromWorld for PulledCubesBuffers {

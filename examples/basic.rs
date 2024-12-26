@@ -1,6 +1,6 @@
 mod shared;
 
-use bevy::{math::Vec3A, prelude::*, render::primitives::Aabb};
+use bevy::{math::Vec3A, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
 use shared::SharedUtilitiesPlugin;
 use vkxl::render::{PulledCube, VoxelRendererPlugin};
 
@@ -43,4 +43,27 @@ fn setup(
         },
         PulledCube,
     ));
+
+    commands.spawn((
+        DirectionalLight {
+            illuminance: light_consts::lux::OVERCAST_DAY,
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform::default().looking_to(Vec3::new(-1., -1.5, -0.5), Vec3::Y),
+        // The default cascade config is designed to handle large scenes.
+        // As this example has a much smaller world, we can tighten the shadow
+        // bounds for better visual quality.
+        CascadeShadowConfigBuilder {
+            first_cascade_far_bound: 4.0,
+            maximum_distance: 10.0,
+            ..default()
+        }
+        .build(),
+    ));
+
+    commands.insert_resource(AmbientLight {
+        color: Color::BLACK,
+        brightness: 0.00,
+    });
 }
