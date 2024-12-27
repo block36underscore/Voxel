@@ -1,10 +1,14 @@
-use bevy::{asset::Handle, core_pipeline::{core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, oit::OrderIndependentTransparencySettingsOffset}, ecs::{query::ROQueryItem, system::{lifetimeless::{Read, SRes}, SystemParamItem}}, input::keyboard::Key, pbr::{MeshPipeline, MeshPipelineKey, MeshViewBindGroup, ViewEnvironmentMapUniformOffset, ViewFogUniformOffset, ViewLightProbesUniformOffset, ViewLightsUniformOffset, ViewScreenSpaceReflectionsUniformOffset}, prelude::*, render::{render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, view::{ExtractedView, RenderVisibleEntities, ViewUniformOffset}}};
+use bevy::{asset::Handle, core_pipeline::{core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, oit::OrderIndependentTransparencySettingsOffset}, ecs::{query::ROQueryItem, system::{lifetimeless::{Read, SRes}, SystemParamItem}}, pbr::{MeshPipeline, MeshPipelineKey, MeshViewBindGroup, SetMeshViewBindGroup, SetPrepassViewBindGroup, ViewEnvironmentMapUniformOffset, ViewFogUniformOffset, ViewLightProbesUniformOffset, ViewLightsUniformOffset, ViewScreenSpaceReflectionsUniformOffset}, prelude::*, render::{render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, view::{ExtractedView, RenderVisibleEntities, ViewUniformOffset}}};
 
 use super::{buffers::PulledCubesBuffers, PulledCube};
 
 
 
-pub(crate) type DrawCustomPhaseItemCommands = (SetItemPipeline, DrawPulledCubesPhaseItem);
+pub(crate) type DrawCustomPhaseItemCommands = (
+    SetItemPipeline, 
+    SetMeshViewBindGroup<0>,
+    DrawPulledCubesPhaseItem,
+);
 pub(crate) type WithCustomRenderedEntity = With<PulledCube>;
 
 #[derive(Resource)]
@@ -101,19 +105,6 @@ impl FromWorld for CubePullingPipeline {
             &layout, 
             buffers.instances.buffer().unwrap()
         );
-
-        // let view_layout_entries = vec![
-        //     uniform_buffer::<ViewUniform>(true)
-        //         .visibility(ShaderStages::VERTEX_FRAGMENT),
-        //     BindGroupLayoutEntry {
-        //         binding: 1,
-        //         visibility: ShaderStages::FRAGMENT,
-        //         ty: BindingType::Buffer {
-        //             ty: BufferBindingType::Uniform,
-        //             has_dynamic_offset: true,
-        //             min_binding_size: Some(Lights),
-        //         }
-        //     },];
         
         let mesh_pipeline = world.resource::<MeshPipeline>().clone();
 
@@ -245,31 +236,13 @@ where
         SRes<CubePullingPipeline>, 
     );
 
-    type ViewQuery = (
-        Read<ViewUniformOffset>,
-        Read<ViewLightsUniformOffset>,
-        Read<ViewFogUniformOffset>,
-        Read<ViewLightProbesUniformOffset>,
-        Read<ViewScreenSpaceReflectionsUniformOffset>,
-        Read<ViewEnvironmentMapUniformOffset>,
-        Read<MeshViewBindGroup>,
-        Option<Read<OrderIndependentTransparencySettingsOffset>>,
-    );
+    type ViewQuery = ();
 
     type ItemQuery = ();
 
     fn render<'w>(
         _: &P,
-        (
-            view_uniform,
-            view_lights,
-            view_fog,
-            view_light_probes,
-            view_ssr,
-            view_environment_map,
-            mesh_view_bind_group,
-            maybe_oit_layers_count_offset,
-        ): ROQueryItem<'w, Self::ViewQuery>,
+        _: ROQueryItem<'w, Self::ViewQuery>,
         _: Option<ROQueryItem<'w, Self::ItemQuery>>,
         resources: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
@@ -278,21 +251,6 @@ where
         let custom_phase_item_buffers = resources.0.into_inner();
         let pipeline = resources.1.into_inner();
         
-        let mut offsets = vec![
-            view_uniform.offset,
-            view_lights.offset,
-            view_fog.offset,
-            **view_light_probes,
-            **view_ssr,
-            **view_environment_map,
-        ];
-        
-        if let Some(layers_count_offset) = maybe_oit_layers_count_offset {
-            offsets.push(layers_count_offset.offset);
-        }
-        
-        pass.set_bind_group(0, &mesh_view_bind_group.value, &offsets);
-
         pass.set_bind_group(1, 
             &pipeline.bind_group, &[]);
 
@@ -302,8 +260,3 @@ where
         RenderCommandResult::Success
     }
 }
-
-
-
-
-
