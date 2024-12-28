@@ -1,10 +1,14 @@
-use bevy::{asset::Handle, core_pipeline::{core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, oit::OrderIndependentTransparencySettingsOffset}, ecs::{query::ROQueryItem, system::{lifetimeless::{Read, SRes}, SystemParamItem}}, pbr::{MeshPipeline, MeshPipelineKey, MeshViewBindGroup, SetMeshViewBindGroup, SetPrepassViewBindGroup, ViewEnvironmentMapUniformOffset, ViewFogUniformOffset, ViewLightProbesUniformOffset, ViewLightsUniformOffset, ViewScreenSpaceReflectionsUniformOffset}, prelude::*, render::{render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, view::{ExtractedView, RenderVisibleEntities, ViewUniformOffset}}};
+use bevy::{asset::Handle, core_pipeline::core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, ecs::{query::ROQueryItem, system::{lifetimeless::SRes, SystemParamItem}}, pbr::{ExtractedDirectionalLight, ExtractedPointLight, LightEntity, MeshPipeline, MeshPipelineKey, RenderCascadesVisibleEntities, RenderCubemapVisibleEntities, RenderMeshInstanceFlags, RenderVisibleMeshEntities, SetMeshViewBindGroup, SetPrepassViewBindGroup, Shadow, ShadowBinKey, ViewLightEntities}, prelude::*, render::{render_asset::RenderAssets, render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedMeshPipelines, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, sync_world::MainEntity, view::{ExtractedView, RenderVisibleEntities}}};
 
 use super::{buffers::PulledCubesBuffers, PulledCube};
 
+pub(crate) type DrawPulledCubesPrepassCommands = (
+    SetItemPipeline, 
+    SetPrepassViewBindGroup<0>,
+    DrawPulledCubesPhaseItem,
+);
 
-
-pub(crate) type DrawCustomPhaseItemCommands = (
+pub(crate) type DrawPulledCubesCommands = (
     SetItemPipeline, 
     SetMeshViewBindGroup<0>,
     DrawPulledCubesPhaseItem,
@@ -117,36 +121,127 @@ impl FromWorld for CubePullingPipeline {
     }
 }
 
-
-
 pub(crate) struct DrawPulledCubesPhaseItem;
 
+pub(crate) struct DrawPulledCubesShadowPhaseItem;
+
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn queue_custom_phase_item(
     pipeline_cache: Res<PipelineCache>,
-    custom_phase_pipeline: Res<CubePullingPipeline>,
+    pulled_cube_pipeline: Res<CubePullingPipeline>,
     mut opaque_render_phases: ResMut<ViewBinnedRenderPhases<Opaque3d>>,
+    mut shadow_render_phases: ResMut<ViewBinnedRenderPhases<Shadow>>,
     opaque_draw_functions: Res<DrawFunctions<Opaque3d>>,
+    shadow_draw_functions: Res<DrawFunctions<Shadow>>,
+    view_lights: Query<(Entity, &ViewLightEntities)>,
+    view_light_entities: Query<&LightEntity>,
     mut specialized_render_pipelines: ResMut<SpecializedRenderPipelines<CubePullingPipeline>>,
-    views: Query<(Entity, &RenderVisibleEntities, &Msaa), With<ExtractedView>>,
+    views: Query<(Entity, &Msaa), With<ExtractedView>>,
+    point_light_entities: Query<&RenderCubemapVisibleEntities, With<ExtractedPointLight>>,
+    directional_light_entities: Query<
+        &RenderCascadesVisibleEntities,
+        With<ExtractedDirectionalLight>,
+    >,
+    spot_light_entities: Query<
+        &RenderVisibleMeshEntities, 
+        With<ExtractedPointLight,>
+    >,
 ) {
-    let draw_custom_phase_item = opaque_draw_functions
+    let draw_pulled_cubes_phase_item = opaque_draw_functions
         .read()
-        .id::<DrawCustomPhaseItemCommands>();
+        .id::<DrawPulledCubesCommands>();
+    
+    let pulled_cubes_prepass_phase_item = shadow_draw_functions
+        .read()
+        .id::<DrawPulledCubesPrepassCommands>();
 
+    for (entity, view_lights) in &view_lights {
+        for view_light_entity in view_lights.lights.iter().copied() {
+            let Ok(light_entity) = 
+                view_light_entities.get(view_light_entity) 
+            else { continue; };
+            
+            let Some(shadow_phase) = 
+                shadow_render_phases.get_mut(&view_light_entity) 
+            else { continue; };
+            
+            let is_directional_light = matches!(
+                light_entity, 
+                LightEntity::Directional { .. }
+            );
+            let visible_entities = match light_entity {
+                LightEntity::Directional {
+                    light_entity,
+                    cascade_index,
+                } => directional_light_entities
+                    .get(*light_entity)
+                    .expect("Failed to get directional light visible entities")
+                    .entities
+                    .get(&entity)
+                    .expect("Failed to get directional light visible entities for view")
+                    .get(*cascade_index)
+                    .expect("Failed to get directional light visible entities for cascade"),
+                LightEntity::Point {
+                    light_entity,
+                    face_index,
+                } => point_light_entities
+                    .get(*light_entity)
+                    .expect("Failed to get point light visible entities")
+                    .get(*face_index),
+                LightEntity::Spot { light_entity } => spot_light_entities
+                    .get(*light_entity)
+                    .expect("Failed to get spot light visible entities"),
+            };
+            let mut light_key = MeshPipelineKey::DEPTH_PREPASS;
+            light_key.set(MeshPipelineKey::NONE, is_directional_light);
+
+            // NOTE: Lights with shadow mapping disabled will have no visible entities
+            // so no meshes will be queued
+
+            if let LightEntity::Directional {
+                    light_entity,
+                    cascade_index,
+                } = light_entity { directional_light_entities
+                    .get(*light_entity)
+                    .expect("Failed to get directional light visible entities")
+                    .entities
+                    .get(&entity)
+                    .expect("Failed to get directional light visible entities for view")
+                    .get(*cascade_index)
+                    .expect("Failed to get directional light visible entities for cascade"); }
+            
+            for (entity, main_entity) in visible_entities.iter().copied() {
+                let pipeline_id = specialized_render_pipelines.specialize(
+                    &pipeline_cache,
+                    &pulled_cube_pipeline,
+                    MeshPipelineKey::NONE,
+                );
+
+                shadow_phase.add(
+                    ShadowBinKey {
+                        pipeline: pipeline_id,
+                        draw_function: pulled_cubes_prepass_phase_item,
+                        asset_id: AssetId::<Mesh>::invalid().untyped(),
+                    },
+                    (entity, main_entity),
+                    BinnedRenderPhaseType::NonMesh,
+                );
+            }
+        }
+    }
+    
     // Render phases are per-view, so we need to iterate over all views so that
     // the entity appears in them. (In this example, we have only one view, but
     // it's good practice to loop over all views anyway.)
-    for (view_entity, view_visible_entities, msaa) in views.iter() {
+    for (view_entity, msaa) in views.iter() {
+        
         let Some(opaque_phase) = opaque_render_phases.get_mut(&view_entity) else {
             continue;
         };
 
         // Find all the custom rendered entities that are visible from this
         // view.
-        for &entity in view_visible_entities
-            .get::<WithCustomRenderedEntity>()
-            .iter()
-        {
+        println!("frame");
             // Ordinarily, the [`SpecializedRenderPipeline::Key`] would contain
             // some per-view settings, such as whether the view is HDR, but for
             // simplicity's sake we simply hard-code the view's characteristics,
@@ -155,7 +250,7 @@ pub(crate) fn queue_custom_phase_item(
             
             let pipeline_id = specialized_render_pipelines.specialize(
                 &pipeline_cache,
-                &custom_phase_pipeline,
+                &pulled_cube_pipeline,
                 view_key,
             );
 
@@ -169,16 +264,15 @@ pub(crate) fn queue_custom_phase_item(
             // not be the ID of a [`Mesh`].
             opaque_phase.add(
                 Opaque3dBinKey {
-                    draw_function: draw_custom_phase_item,
+                    draw_function: draw_pulled_cubes_phase_item,
                     pipeline: pipeline_id,
                     asset_id: AssetId::<Mesh>::invalid().untyped(),
                     material_bind_group_id: None,
                     lightmap_image: None,
                 },
-                entity,
+                (Entity::PLACEHOLDER, MainEntity::from(Entity::PLACEHOLDER)),
                 BinnedRenderPhaseType::NonMesh,
             );
-        }
     }
 }
 
@@ -205,29 +299,43 @@ pub(crate) fn create_bind_group(
     )
 }
 
-// pub(crate) fn create_view_bind_group(
-//     render_device: &RenderDevice, 
-//     layout: &BindGroupLayout, 
-//     view_resource: &BindingResource,
-//     lights_resource: &BindingResource,
-// ) -> BindGroup {
-//     render_device.create_bind_group(
-//         "view_uniform", 
-//         layout, 
-//         &[
-//             BindGroupEntry {
-//                 binding: 0,
-//                 resource: view_resource.clone(), 
-//             },
-//             BindGroupEntry {
-//                 binding: 1,
-//                 resource: lights_resource.clone(),
-//             }
-//         ]
-//     )
-// }
-
 impl<P> RenderCommand<P> for DrawPulledCubesPhaseItem
+where
+    P: PhaseItem,
+{
+    type Param = (
+        SRes<PulledCubesBuffers>, 
+        SRes<CubePullingPipeline>, 
+    );
+
+    type ViewQuery = ();
+
+    type ItemQuery = ();
+
+    fn render<'w>(
+        _: &P,
+        _: ROQueryItem<'w, Self::ViewQuery>,
+        _: Option<ROQueryItem<'w, Self::ItemQuery>>,
+        resources: SystemParamItem<'w, '_, Self::Param>,
+        pass: &mut TrackedRenderPass<'w>,
+    ) -> RenderCommandResult {
+        // Borrow check workaround.
+        let custom_phase_item_buffers = resources.0.into_inner();
+        let pipeline = resources.1.into_inner();
+        
+        println!("render");
+        
+        pass.set_bind_group(1, 
+            &pipeline.bind_group, &[]);
+
+        // Draw one triangle (3 vertices).
+        pass.draw(0..(custom_phase_item_buffers.instances.len() * 36) as u32, 0..1);
+
+        RenderCommandResult::Success
+    }
+}
+
+impl<P> RenderCommand<P> for DrawPulledCubesShadowPhaseItem
 where
     P: PhaseItem,
 {
@@ -260,3 +368,4 @@ where
         RenderCommandResult::Success
     }
 }
+

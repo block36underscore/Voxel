@@ -1,13 +1,14 @@
 mod shared;
 
-use bevy::{math::Vec3A, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
+use bevy::{math::Vec3A, pbr::{CascadeShadowConfigBuilder, DirectionalLightShadowMap}, prelude::*, render::primitives::Aabb};
 use shared::SharedUtilitiesPlugin;
 use vkxl::render::{PulledCube, VoxelRendererPlugin};
 
 fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, VoxelRendererPlugin, SharedUtilitiesPlugin))
-        .add_systems(Startup, setup);
+        .add_systems(Startup, setup)
+        .insert_resource(DirectionalLightShadowMap { size: 4096 });
     // Make sure to tell Bevy to check our entity for visibility. Bevy won't
     // do this by default, for efficiency reasons.
 

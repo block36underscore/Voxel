@@ -93,6 +93,7 @@ pub fn cursor_grab(mut q_windows: Query<&mut Window, With<PrimaryWindow>>) {
 }
 
 #[derive(Component)]
+#[require(ViewVisibility, Transform)]
 pub struct Player;
 
 #[derive(Component)]

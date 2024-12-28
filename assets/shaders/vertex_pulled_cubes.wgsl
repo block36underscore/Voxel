@@ -166,3 +166,16 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     
     // return out.color;
 }
+
+@vertex
+fn shadow_vertex(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
+    var vertex_pos = get_base_vertex(index);
+    vertex_pos *= triangles[index / VERTEX_COUNT];
+    vertex_pos = view.clip_from_world * vertex_pos;
+    return vertex_pos;
+}
+
+@fragment
+fn shadow_fragment(@builtin(position) clip_pos: vec4f) {
+    return;
+}

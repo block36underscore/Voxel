@@ -32,7 +32,7 @@ pub(crate) fn update_buffers(
             }
         );
    }
-
+   
     buffers.instances.write_buffer(&render_device, &render_queue);
 
     pipeline.bind_group = create_bind_group(

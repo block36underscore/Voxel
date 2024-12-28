@@ -1,6 +1,6 @@
-use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, prelude::{Component, IntoSystemConfigs, Transform, ViewVisibility}, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, view::{self, ViewUniforms, VisibilitySystems}, Render, RenderApp, RenderSet}};
+use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, pbr::Shadow, prelude::*, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, sync_world::RenderEntity, view::{self, ViewUniforms, VisibilitySystems, VisibilityRange}, Render, RenderApp, RenderSet}};
 use buffers::{prepare_custom_phase_item_buffers, update_buffers, PulledCubesBuffers};
-use pipeline::{queue_custom_phase_item, CubePullingPipeline, DrawCustomPhaseItemCommands, WithCustomRenderedEntity};
+use pipeline::{queue_custom_phase_item, CubePullingPipeline, DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity};
 
 pub mod buffers;
 pub mod pipeline;
@@ -9,18 +9,21 @@ pub struct VoxelRendererPlugin;
 
 impl Plugin for VoxelRendererPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(ExtractComponentPlugin::<PulledCube>::default())
-            .add_systems(
+        app.add_plugins((
+                ExtractComponentPlugin::<PulledCube>::default(),
+            )
+        ).add_systems(
             PostUpdate,
-            view::check_visibility::<WithCustomRenderedEntity>
-                .in_set(VisibilitySystems::CheckVisibility),
+            (
+                view::check_visibility::<WithCustomRenderedEntity>
+                    .in_set(VisibilitySystems::CheckVisibility),
+            ),
         );
 
         app.get_sub_app_mut(RenderApp)
             .unwrap()
-//            .init_resource::<CustomPhasePipeline>()
-//            .init_resource::<SpecializedRenderPipelines<CustomPhasePipeline>>()
-            .add_render_command::<Opaque3d, DrawCustomPhaseItemCommands>()
+            .add_render_command::<Opaque3d, DrawPulledCubesCommands>()
+            .add_render_command::<Shadow, DrawPulledCubesPrepassCommands>()
             .add_systems(
                 Render,
                 prepare_custom_phase_item_buffers.in_set(RenderSet::Prepare),
@@ -40,7 +43,7 @@ impl Plugin for VoxelRendererPlugin {
 }
 
 #[derive(Clone, Component)]
-#[require(Transform, ViewVisibility)]
+#[require(Transform)]
 pub struct PulledCube;
 
 impl ExtractComponent for PulledCube {
@@ -55,5 +58,3 @@ impl ExtractComponent for PulledCube {
         Some((marker.clone(), *transform, *visibility))
     }
 }
-
-
