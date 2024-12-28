@@ -1,4 +1,4 @@
-use bevy::{math::Mat4, pbr::{GpuLights, LightMeta, MeshPipeline}, prelude::{Commands, FromWorld, Query, Res, ResMut, Resource, Transform, ViewVisibility, World}, render::{render_resource::{BufferUsages, BufferVec, ShaderType}, renderer::{RenderDevice, RenderQueue}, view::ViewUniforms}};
+use bevy::{math::Mat4, prelude::{Commands, FromWorld, Query, Res, ResMut, Resource, Transform, ViewVisibility, World}, render::{render_resource::{BufferUsages, BufferVec, ShaderType}, renderer::{RenderDevice, RenderQueue}}};
 use bytemuck::{Pod, Zeroable};
 
 use super::{pipeline::{create_bind_group, CubePullingPipeline}, PulledCube};
