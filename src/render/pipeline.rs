@@ -1,4 +1,4 @@
-use bevy::{asset::Handle, core_pipeline::core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, ecs::{query::ROQueryItem, system::{lifetimeless::SRes, SystemParamItem}}, pbr::{ExtractedDirectionalLight, ExtractedPointLight, LightEntity, MeshPipeline, MeshPipelineKey, PrepassPipeline, RenderCascadesVisibleEntities, RenderCubemapVisibleEntities, RenderVisibleMeshEntities, SetMeshViewBindGroup, SetPrepassViewBindGroup, Shadow, ShadowBinKey, ViewLightEntities}, prelude::*, render::{globals::GlobalsUniform, render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{binding_types::uniform_buffer, BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntries, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, IntoBindGroupLayoutEntryBuilder, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, ShaderType, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, sync_world::MainEntity, view::{ExtractedView, ViewUniform}}};
+use bevy::{asset::Handle, core_pipeline::core_3d::{Opaque3d, Opaque3dBinKey, CORE_3D_DEPTH_FORMAT}, ecs::{query::ROQueryItem, system::{lifetimeless::SRes, SystemParamItem}}, pbr::{ExtractedDirectionalLight, ExtractedPointLight, LightEntity, MeshPipeline, MeshPipelineKey, RenderCascadesVisibleEntities, RenderCubemapVisibleEntities, RenderVisibleMeshEntities, SetMeshViewBindGroup, SetPrepassViewBindGroup, Shadow, ShadowBinKey, ViewLightEntities}, prelude::*, render::{globals::GlobalsUniform, render_phase::{BinnedRenderPhaseType, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult, SetItemPipeline, TrackedRenderPass, ViewBinnedRenderPhases}, render_resource::{binding_types::uniform_buffer, BindGroup, BindGroupEntry, BindGroupLayout, BindGroupLayoutEntries, BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType, ColorTargetState, ColorWrites, CompareFunction, DepthStencilState, FragmentState, MultisampleState, PipelineCache, PrimitiveState, RenderPipelineDescriptor, ShaderStages, SpecializedRenderPipeline, SpecializedRenderPipelines, TextureFormat, VertexState}, renderer::RenderDevice, sync_world::MainEntity, view::{ExtractedView, ViewUniform}}};
 
 use super::{buffers::PulledCubesBuffers, PulledCube};
 
@@ -248,12 +248,12 @@ pub(crate) fn queue_custom_phase_item(
     mut specialized_render_pipelines: ResMut<SpecializedRenderPipelines<CubePullingPipeline>>,
     mut specialized_shadow_render_pipelines: ResMut<SpecializedRenderPipelines<CubePullingShadowPipeline>>,
     views: Query<(Entity, &Msaa), With<ExtractedView>>,
-    point_light_entities: Query<&RenderCubemapVisibleEntities, With<ExtractedPointLight>>,
+    _point_light_entities: Query<&RenderCubemapVisibleEntities, With<ExtractedPointLight>>,
     directional_light_entities: Query<
         &RenderCascadesVisibleEntities,
         With<ExtractedDirectionalLight>,
     >,
-    spot_light_entities: Query<
+    _spot_light_entities: Query<
         &RenderVisibleMeshEntities, 
         With<ExtractedPointLight,>
     >,
