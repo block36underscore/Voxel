@@ -7,8 +7,9 @@
 
 #import bevy_pbr::{
     forward_io::FragmentOutput,
-    pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing},
+    pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing, calculate_view},
     pbr_types::STANDARD_MATERIAL_FLAGS_UNLIT_BIT,
+    mesh_types::{MESH_FLAGS_TRANSMITTED_SHADOW_RECEIVER_BIT, MESH_FLAGS_SHADOW_RECEIVER_BIT},
 }
 
 #import bevy_pbr::{
@@ -143,15 +144,19 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     pbr_input.world_position = vertex.world_position;
     pbr_input.world_normal = vertex.normal;
     pbr_input.N = vertex.normal.xyz;
-    pbr_input.V = normalize(vertex.view_position).xyz;
+    pbr_input.V = calculate_view(vertex.world_position, false);
 
-    pbr_input.material.base_color = vec4f(0.5, 0.5, 1.0, 1.0);
+    // pbr_input.material.base_color = vec4f(0.5, 0.5, 1.0, 1.0);
+    pbr_input.material.base_color = vec4f(vertex.normal.xyz, 1.0);
     pbr_input.material.perceptual_roughness = 0.05;
 
     pbr_input.material.base_color = alpha_discard(
       pbr_input.material, 
       pbr_input.material.base_color
     );
+    
+    // pbr_input.flags |= MESH_FLAGS_SHADOW_RECEIVER_BIT;
+    // pbr_input.flags |= MESH_FLAGS_TRANSMITTED_SHADOW_RECEIVER_BIT;
 
     var out: FragmentOutput;
     // if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) == 0u {

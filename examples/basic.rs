@@ -8,7 +8,7 @@ fn main() {
     let mut app = App::new();
     app.add_plugins((DefaultPlugins, VoxelRendererPlugin, SharedUtilitiesPlugin))
         .add_systems(Startup, setup)
-        .insert_resource(DirectionalLightShadowMap { size: 4096 });
+        .add_systems(Startup, create_shape);
     // Make sure to tell Bevy to check our entity for visibility. Bevy won't
     // do this by default, for efficiency reasons.
 
@@ -67,4 +67,24 @@ fn setup(
         color: Color::BLACK,
         brightness: 0.00,
     });
+}
+
+fn create_shape(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let mesh = meshes.add(Cuboid::default());
+    let material = materials.add(
+        StandardMaterial {
+            base_color: Color::Srgba(Srgba::new(0.2, 0.7, 0.3, 1.0)),
+            ..Default::default()
+        }
+    );
+    
+    commands.spawn((
+        Mesh3d(mesh),
+        MeshMaterial3d(material),
+        Transform::from_xyz(-0.4, 0.3, -0.2),
+    ));
 }

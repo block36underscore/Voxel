@@ -1,7 +1,7 @@
 use bevy::{math::Mat4, prelude::{Commands, FromWorld, Query, Res, ResMut, Resource, Transform, ViewVisibility, World}, render::{render_resource::{BufferUsages, BufferVec, ShaderType}, renderer::{RenderDevice, RenderQueue}}};
 use bytemuck::{Pod, Zeroable};
 
-use super::{pipeline::{create_bind_group, CubePullingPipeline}, PulledCube};
+use super::{pipeline::{create_bind_group, CubePullingPipeline, CubePullingShadowPipeline}, PulledCube};
 
 #[derive(Resource)]
 pub(crate) struct PulledCubesBuffers {
@@ -19,6 +19,7 @@ pub(crate) fn update_buffers(
     render_device: Res<RenderDevice>,
     render_queue: Res<RenderQueue>,
     mut pipeline: ResMut<CubePullingPipeline>,
+    mut shadow_pipeline: ResMut<CubePullingShadowPipeline>,
     entities: Query<(&PulledCube, &Transform, &ViewVisibility)>,
 ) {
     buffers.instances.clear();
@@ -36,6 +37,12 @@ pub(crate) fn update_buffers(
     buffers.instances.write_buffer(&render_device, &render_queue);
 
     pipeline.bind_group = create_bind_group(
+        &render_device,
+        &pipeline.layout,
+        buffers.instances.buffer().unwrap(),
+    );
+    
+    shadow_pipeline.bind_group = create_bind_group(
         &render_device,
         &pipeline.layout,
         buffers.instances.buffer().unwrap(),

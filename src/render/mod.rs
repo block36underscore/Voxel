@@ -1,6 +1,6 @@
 use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, pbr::Shadow, prelude::*, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, view::{self, VisibilitySystems}, Render, RenderApp, RenderSet}};
 use buffers::{prepare_custom_phase_item_buffers, update_buffers, PulledCubesBuffers};
-use pipeline::{queue_custom_phase_item, CubePullingPipeline, DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity};
+use pipeline::{queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline, DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity};
 
 pub mod buffers;
 pub mod pipeline;
@@ -38,7 +38,9 @@ impl Plugin for VoxelRendererPlugin {
             .expect("RenderApp does not exist")
             .init_resource::<PulledCubesBuffers>()
             .init_resource::<CubePullingPipeline>()
-            .init_resource::<SpecializedRenderPipelines<CubePullingPipeline>>();
+            .init_resource::<CubePullingShadowPipeline>()
+            .init_resource::<SpecializedRenderPipelines<CubePullingPipeline>>()
+            .init_resource::<SpecializedRenderPipelines<CubePullingShadowPipeline>>();
     }
 }
 
