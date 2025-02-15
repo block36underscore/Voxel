@@ -88,7 +88,7 @@ pub fn setup_controls() -> InputMap<Action> {
 
 pub fn cursor_grab(mut q_windows: Query<&mut Window, With<PrimaryWindow>>) {
     let mut primary_window = q_windows.single_mut();
-    primary_window.cursor_options.grab_mode = CursorGrabMode::Confined;
+    primary_window.cursor_options.grab_mode = CursorGrabMode::Locked;
     primary_window.cursor_options.visible = false;
 }
 
@@ -104,9 +104,9 @@ pub fn spawn_player(mut commands: Commands) {
     let mut look_transform = Transform::from_xyz(5.0, 5.0, 5.0);
     look_transform.look_at(Vec3::ZERO, Vec3::Y);
     look_transform.translation = Vec3::ZERO;
-    let camera = commands.spawn((
-        Camera, Camera3d::default(), look_transform,
-    )).id();
+    let camera = commands
+        .spawn((Camera, Camera3d::default(), look_transform))
+        .id();
     let mut player = commands.spawn((
         Transform::from_xyz(5.0, 5.0, 5.0),
         Player,
@@ -155,10 +155,7 @@ pub fn handle_player_input(
         pitch -= camera_delta.y * LOOK_SPEED;
         pitch = pitch.clamp(-PI / 2.0, PI / 2.0);
 
-        camera_transform.rotation = Quat::from_euler(
-            EulerRot::YXZ, 
-            yaw, pitch, 0.0
-        );
+        camera_transform.rotation = Quat::from_euler(EulerRot::YXZ, yaw, pitch, 0.0);
     }
 
     // Window Focus Inputs

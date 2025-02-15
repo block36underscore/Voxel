@@ -16,6 +16,7 @@
     pbr_functions::alpha_discard,
     pbr_fragment::pbr_input_from_standard_material,
     pbr_types::pbr_input_new,
+    shadows,
 }
 
 @group(0) @binding(0) var<uniform> view: View;
@@ -30,22 +31,21 @@ struct VertexOutput {
     @location(0) color: vec3<f32>,
     @location(1) normal: vec3<f32>,
     @location(2) world_position: vec4f,
-    @location(3) view_position: vec3f,
 };
 
 const VERTICES = array<vec3f, 36>(
 
 // +X
-  
+
   vec3f( 0.5,  0.5, -0.5),
   vec3f( 0.5,  0.5,  0.5),
   vec3f( 0.5, -0.5, -0.5),
   vec3f( 0.5,  0.5,  0.5),
   vec3f( 0.5, -0.5,  0.5),
   vec3f( 0.5, -0.5, -0.5),
-  
+
 // -X
-  
+
   vec3f(-0.5,  0.5, -0.5),
   vec3f(-0.5, -0.5, -0.5),
   vec3f(-0.5,  0.5,  0.5),
@@ -54,7 +54,7 @@ const VERTICES = array<vec3f, 36>(
   vec3f(-0.5, -0.5,  0.5),
 
 // +Y
-  
+
   vec3f(-0.5, 0.5,  0.5),
   vec3f( 0.5, 0.5,  0.5),
   vec3f(-0.5, 0.5, -0.5),
@@ -63,25 +63,25 @@ const VERTICES = array<vec3f, 36>(
   vec3f(-0.5, 0.5, -0.5),
 
 // -Y
-  
+
   vec3f(-0.5, -0.5,  0.5),
   vec3f(-0.5, -0.5, -0.5),
   vec3f( 0.5, -0.5,  0.5),
   vec3f( 0.5, -0.5,  0.5),
   vec3f(-0.5, -0.5, -0.5),
   vec3f( 0.5, -0.5, -0.5),
-  
+
   // +Z
-  
+
   vec3f(-0.5,  0.5, 0.5),
   vec3f( 0.5,  0.5, 0.5),
   vec3f(-0.5, -0.5, 0.5),
   vec3f( 0.5,  0.5, 0.5),
   vec3f( 0.5, -0.5, 0.5),
   vec3f(-0.5, -0.5, 0.5),
-  
+
 // -Z
-  
+
   vec3f(-0.5,  0.5, -0.5),
   vec3f(-0.5, -0.5, -0.5),
   vec3f( 0.5,  0.5, -0.5),
@@ -129,9 +129,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
       vertex_output.color = vec3f(0.0, 0.0, 1.0);
     }
     vertex_output.normal = get_base_normal(index);
-    
-    vertex_output.view_position = 
-        (view.view_from_world * vertex_output.world_position).xyz;
+
     return vertex_output;
 }
 
@@ -139,7 +137,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
 @fragment
 fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     var pbr_input = pbr_input_new();
-    
+
     pbr_input.frag_coord = vertex.clip_position;
     pbr_input.world_position = vertex.world_position;
     pbr_input.world_normal = vertex.normal;
@@ -151,12 +149,11 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     pbr_input.material.perceptual_roughness = 0.05;
 
     pbr_input.material.base_color = alpha_discard(
-      pbr_input.material, 
+      pbr_input.material,
       pbr_input.material.base_color
     );
-    
-    // pbr_input.flags |= MESH_FLAGS_SHADOW_RECEIVER_BIT;
-    // pbr_input.flags |= MESH_FLAGS_TRANSMITTED_SHADOW_RECEIVER_BIT;
+
+    pbr_input.flags |= MESH_FLAGS_SHADOW_RECEIVER_BIT;
 
     var out: FragmentOutput;
     // if (pbr_input.material.flags & STANDARD_MATERIAL_FLAGS_UNLIT_BIT) == 0u {
@@ -166,10 +163,6 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     // }
 
     return main_pass_post_lighting_processing(pbr_input, out.color);
-    
-    // return vec4(vertex.normal, 1.0);
-    
-    // return out.color;
 }
 
 @vertex

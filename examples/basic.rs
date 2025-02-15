@@ -18,9 +18,7 @@ fn main() {
 }
 
 /// Spawns the objects in the scene.
-fn setup(
-    mut commands: Commands,
-) {
+fn setup(mut commands: Commands) {
     // Spawn a single entity that has custom rendering. It'll be extracted into
     // the render world via [`ExtractComponent`].
     commands.spawn((
@@ -36,7 +34,7 @@ fn setup(
 
     commands.spawn((
         Visibility::default(),
-        Transform::from_translation(Vec3::new(-1.5, 0.2, 0.0)),
+        Transform::from_translation(Vec3::new(-1.5, 0.1, 0.0)),
         // This `Aabb` is necessary for the visibility checks to work.
         Aabb {
             center: Vec3A::ZERO,
@@ -75,13 +73,11 @@ fn create_shape(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let mesh = meshes.add(Cuboid::default());
-    let material = materials.add(
-        StandardMaterial {
-            base_color: Color::Srgba(Srgba::new(0.2, 0.7, 0.3, 1.0)),
-            ..Default::default()
-        }
-    );
-    
+    let material = materials.add(StandardMaterial {
+        base_color: Color::Srgba(Srgba::new(0.2, 0.7, 0.3, 1.0)),
+        ..Default::default()
+    });
+
     commands.spawn((
         Mesh3d(mesh),
         MeshMaterial3d(material),
