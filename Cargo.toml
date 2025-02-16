@@ -1,5 +1,5 @@
 [package]
-name = "vkxl" # name determined by a mispelling of voxel i though sounded neat
+name = "vkxl"     # name determined by a mispelling of voxel i though sounded neat
 version = "0.1.0"
 edition = "2021"
 
@@ -14,11 +14,11 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 [dependencies]
-bevy = "0.15.0"
+bevy = "0.15.2"
 bytemuck = "1.20.0"
 
 [dev-dependencies]
-leafwing-input-manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager.git" } 
+leafwing-input-manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager.git" }
 
 [[example]]
 name = "shared"
