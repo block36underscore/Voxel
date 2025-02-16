@@ -2,7 +2,7 @@ mod shared;
 
 use bevy::{math::Vec3A, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
 use shared::SharedUtilitiesPlugin;
-use vkxl::{render::PulledCube, VoxelPlugin};
+use vkxl::{render::PulledCube, world::chunk::Chunk16, VoxelPlugin};
 
 fn main() {
     let mut app = App::new();
@@ -19,18 +19,12 @@ fn main() {
 
 /// Spawns the objects in the scene.
 fn setup(mut commands: Commands) {
-    // Spawn a single entity that has custom rendering. It'll be extracted into
-    // the render world via [`ExtractComponent`].
-    commands.spawn((
-        Visibility::default(),
-        Transform::from_translation(Vec3::new(0.1, 0.2, 0.0)),
-        // This `Aabb` is necessary for the visibility checks to work.
-        Aabb {
-            center: Vec3A::ZERO,
-            half_extents: Vec3A::splat(0.5),
-        },
-        PulledCube,
-    ));
+    let mut chunk = Chunk16::default();
+    for i in 0..(16 * 16 * 16) {
+        if i % 5 == 0 {
+            chunk[i] = true;
+        }
+    }
 
     commands.spawn((
         Visibility::default(),
@@ -38,9 +32,9 @@ fn setup(mut commands: Commands) {
         // This `Aabb` is necessary for the visibility checks to work.
         Aabb {
             center: Vec3A::ZERO,
-            half_extents: Vec3A::splat(0.5),
+            half_extents: Vec3A::splat(10.0),
         },
-        PulledCube,
+        chunk,
     ));
 
     commands.spawn((

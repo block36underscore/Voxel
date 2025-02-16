@@ -1,6 +1,23 @@
-use bevy::{app::{App, Plugin, PostUpdate}, core_pipeline::core_3d::Opaque3d, pbr::Shadow, prelude::*, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, view::{self, VisibilitySystems}, Render, RenderApp, RenderSet}};
+use bevy::{
+    app::{App, Plugin, PostUpdate},
+    core_pipeline::core_3d::Opaque3d,
+    pbr::Shadow,
+    prelude::*,
+    render::{
+        extract_component::{ExtractComponent, ExtractComponentPlugin},
+        render_phase::AddRenderCommand,
+        render_resource::SpecializedRenderPipelines,
+        view::{self, VisibilitySystems},
+        Render, RenderApp, RenderSet,
+    },
+};
 use buffers::{prepare_custom_phase_item_buffers, update_buffers, PulledCubesBuffers};
-use pipeline::{queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline, DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity};
+use pipeline::{
+    queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline,
+    DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
+};
+
+use crate::world::chunk::{Chunk, Chunk16};
 
 pub mod buffers;
 pub mod pipeline;
@@ -10,14 +27,13 @@ pub struct VoxelRendererPlugin;
 impl Plugin for VoxelRendererPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
-                ExtractComponentPlugin::<PulledCube>::default(),
-            )
-        ).add_systems(
+            ExtractComponentPlugin::<PulledCube>::default(),
+            ExtractComponentPlugin::<Chunk16>::default(),
+        ))
+        .add_systems(
             PostUpdate,
-            (
-                view::check_visibility::<WithCustomRenderedEntity>
-                    .in_set(VisibilitySystems::CheckVisibility),
-            ),
+            (view::check_visibility::<WithCustomRenderedEntity>
+                .in_set(VisibilitySystems::CheckVisibility),),
         );
 
         app.get_sub_app_mut(RenderApp)
@@ -28,9 +44,13 @@ impl Plugin for VoxelRendererPlugin {
                 Render,
                 prepare_custom_phase_item_buffers.in_set(RenderSet::Prepare),
             )
-            .add_systems(Render, (queue_custom_phase_item.in_set(RenderSet::Queue),
-                update_buffers));
-
+            .add_systems(
+                Render,
+                (
+                    queue_custom_phase_item.in_set(RenderSet::Queue),
+                    update_buffers,
+                ),
+            );
     }
 
     fn finish(&self, app: &mut App) {
@@ -54,7 +74,7 @@ impl ExtractComponent for PulledCube {
     type Out = (Self, Transform, ViewVisibility);
 
     fn extract_component(
-        item: bevy::ecs::query::QueryItem<'_, Self::QueryData>
+        item: bevy::ecs::query::QueryItem<'_, Self::QueryData>,
     ) -> Option<Self::Out> {
         let (marker, transform, visibility) = item;
         Some((marker.clone(), *transform, *visibility))
