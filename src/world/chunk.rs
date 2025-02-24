@@ -3,13 +3,13 @@ use std::{
     slice::{Iter, IterMut},
 };
 
-use bevy::{prelude::*, render::extract_component::ExtractComponent};
+use bevy::{math::I64Vec3, prelude::*, render::extract_component::ExtractComponent};
 
 use crate::render::buffers::{Cube, ToCubes};
 
-use super::block::BlockState;
+use super::{block::BlockState, generation::BlockGenerator};
 
-pub const fn index_to_pos(index: usize, size: usize) -> IVec3 {
+const fn index_to_pos(index: usize, size: usize) -> IVec3 {
     IVec3::new(
         (index / (size * size)) as i32,
         ((index / size) % size) as i32,
@@ -28,7 +28,27 @@ impl<const SIZE: usize> Chunk<SIZE> {
             blocks: self.blocks.clone(),
         }
     }
+
+    pub fn generate(generator: BlockGenerator, offset: I64Vec3) -> Self {
+        let mut output = Self::default();
+
+        for i in 0..Self::volume() {
+            let pos = offset + Self::index_to_pos(i).as_i64vec3();
+            output[i] = generator(pos);
+        }
+
+        output
+    }
+
+    pub fn volume() -> usize {
+        SIZE*SIZE*SIZE
+    }
+
+    pub fn index_to_pos(index: usize) -> IVec3 {
+        index_to_pos(index, SIZE)
+    }
 }
+
 impl<const SIZE: usize> Default for Chunk<SIZE> {
     fn default() -> Self {
         Self {

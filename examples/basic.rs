@@ -1,8 +1,8 @@
 mod shared;
 
-use bevy::{math::Vec3A, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
+use bevy::{math::{I64Vec3, Vec3A}, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
 use shared::SharedUtilitiesPlugin;
-use vkxl::{render::PulledCube, world::chunk::Chunk16, VoxelPlugin};
+use vkxl::{render::PulledCube, world::{chunk::Chunk16, generation}, VoxelPlugin};
 
 fn main() {
     let mut app = App::new();
@@ -19,12 +19,7 @@ fn main() {
 
 /// Spawns the objects in the scene.
 fn setup(mut commands: Commands) {
-    let mut chunk = Chunk16::default();
-    for i in 0..(16 * 16 * 16) {
-        if i % 5 == 0 {
-            chunk[i] = true;
-        }
-    }
+    let chunk = Chunk16::generate(generation::debug::sine::<5, 3, 10>, I64Vec3::ZERO);
 
     commands.spawn((
         Visibility::default(),
@@ -48,8 +43,10 @@ fn setup(mut commands: Commands) {
         // As this example has a much smaller world, we can tighten the shadow
         // bounds for better visual quality.
         CascadeShadowConfigBuilder {
-            first_cascade_far_bound: 10.0,
+            first_cascade_far_bound: 1.0,
             maximum_distance: 100.0,
+            minimum_distance: 0.1,
+            // num_cascades: 100,
             ..default()
         }
         .build(),
