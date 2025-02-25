@@ -17,7 +17,7 @@ use pipeline::{
     DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
 };
 
-use crate::world::chunk::{Chunk, Chunk16, ChunkPlugin};
+use crate::world::chunk::ChunkPlugin;
 
 pub mod buffers;
 pub mod pipeline;

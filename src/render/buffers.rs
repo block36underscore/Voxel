@@ -61,7 +61,7 @@ pub(crate) fn update_buffers(
         });
     }
 
-    for (chunk, transform, visibility) in &chunks {
+    for (chunk, transform, _visibility) in &chunks {
         // if !visibility.get() {
         //     continue;
         // }
