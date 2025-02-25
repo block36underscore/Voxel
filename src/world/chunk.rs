@@ -3,11 +3,24 @@ use std::{
     slice::{Iter, IterMut},
 };
 
-use bevy::{math::I64Vec3, prelude::*, render::extract_component::ExtractComponent};
+use bevy::{math::I64Vec3, prelude::*, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, Render, RenderApp}};
 
-use crate::render::buffers::{Cube, ToCubes};
+use crate::render::buffers::{self, update_buffers, Cube, ToCubes};
 
-use super::{block::BlockState, generation::BlockGenerator};
+use super::{block::BlockState, generation::BlockGenerator, propagate_chunk_offsets};
+
+#[derive(Default)]
+pub struct ChunkPlugin<const SIZE: usize>;
+
+impl <const SIZE: usize> Plugin for ChunkPlugin<SIZE> {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(ExtractComponentPlugin::<Chunk<SIZE>>::default());
+        app.add_systems(PostUpdate, propagate_chunk_offsets::<SIZE>);
+        app.get_sub_app_mut(RenderApp)
+            .unwrap()
+            .add_systems(Render, buffers::update_chunk_buffers::<SIZE>.after(update_buffers));
+    }
+}
 
 const fn index_to_pos(index: usize, size: usize) -> IVec3 {
     IVec3::new(

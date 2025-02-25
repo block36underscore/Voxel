@@ -97,6 +97,30 @@ pub(crate) fn update_buffers(
     );
 }
 
+pub(crate) fn update_chunk_buffers<const SIZE: usize>(
+    mut buffers: ResMut<PulledCubesBuffers>,
+    chunks: Query<(&ExtractedChunk<SIZE>, &Transform, &ViewVisibility)>,
+) {
+    for (chunk, transform, _) in &chunks {
+        // if !visibility.get() {
+        //     continue;
+        // }
+
+        let matrix = transform.compute_matrix().transpose();
+
+        chunk
+            .to_cubes()
+            .iter_mut()
+            .map(|cube| {
+                cube.transform *= matrix;
+                cube
+            })
+            .for_each(|cube| {
+                buffers.instances.push(*cube);
+            });
+    }
+}
+
 impl FromWorld for PulledCubesBuffers {
     fn from_world(world: &mut World) -> Self {
         let render_device = world.resource::<RenderDevice>();

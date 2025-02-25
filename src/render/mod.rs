@@ -17,7 +17,7 @@ use pipeline::{
     DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
 };
 
-use crate::world::chunk::{Chunk, Chunk16};
+use crate::world::chunk::{Chunk, Chunk16, ChunkPlugin};
 
 pub mod buffers;
 pub mod pipeline;
@@ -28,7 +28,7 @@ impl Plugin for VoxelRendererPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             ExtractComponentPlugin::<PulledCube>::default(),
-            ExtractComponentPlugin::<Chunk16>::default(),
+            ChunkPlugin::<16>,
         ))
         .add_systems(
             PostUpdate,
