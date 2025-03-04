@@ -47,7 +47,7 @@ pub(crate) type DrawPulledCubesCommands = (
 pub(crate) type WithCustomRenderedEntity = With<PulledCube>;
 
 #[derive(Resource)]
-pub(crate) struct CubePullingPipeline {
+pub struct CubePullingPipeline {
     pub(crate) shader: Handle<Shader>,
     pub(crate) layout: BindGroupLayout,
     pub(crate) bind_group: BindGroup,
@@ -146,7 +146,7 @@ impl FromWorld for CubePullingPipeline {
 }
 
 #[derive(Resource)]
-pub(crate) struct CubePullingShadowPipeline {
+pub struct CubePullingShadowPipeline {
     pub(crate) shader: Handle<Shader>,
     pub(crate) layout: BindGroupLayout,
     pub(crate) bind_group: BindGroup,
@@ -412,7 +412,6 @@ where
 
         pass.set_bind_group(1, &pipeline.bind_group, &[]);
 
-        // Draw one triangle (3 vertices).
         pass.draw(
             0..(custom_phase_item_buffers.instances.len() * 36) as u32,
             0..1,

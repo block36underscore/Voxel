@@ -30,4 +30,12 @@ pub mod debug {
     -> BlockState {
         pos.y < (sin(pos.x as f32 * 2.0 * f32::consts::PI / PERIOD as f32) * (AMPLITUDE as f32)) as i64 + LEVEL
     }
+
+    pub fn empty(_: I64Vec3) -> BlockState {
+        false
+    }
+
+    pub fn full(_: I64Vec3) -> BlockState {
+        true
+    }
 }

@@ -7,7 +7,8 @@ use chunk::Chunk;
 use generation::BlockGenerator;
 
 #[derive(Component)]
-pub struct World {
+#[require(Visibility, Transform)]
+pub struct Level {
     pub generator: BlockGenerator,
 }
 
@@ -22,8 +23,22 @@ pub(crate) fn propagate_chunk_offsets<const SIZE: usize>(
     });
 }
 
-impl World {
-    pub fn load<const SIZE: usize>(&self, chunk: I64Vec3) -> Chunk<SIZE> {
-        Chunk::<SIZE>::generate(self.generator, chunk * SIZE as i64)
+impl Level {
+    pub fn load<const SIZE: usize>(&self, chunk: I64Vec3) -> (Chunk<SIZE>, ChunkOffset) {
+        (
+            Chunk::<SIZE>::generate(self.generator, chunk * SIZE as i64),
+            ChunkOffset(chunk),
+        )
+    }
+}
+
+pub trait Load {
+    fn load<const SIZE: usize>(&mut self, chunk: I64Vec3, commands: &mut Commands);
+}
+
+impl Load for (Entity, &Level) {
+    fn load<const SIZE: usize>(&mut self, chunk: I64Vec3, commands: &mut Commands) {
+        let chunk = commands.spawn((self.1.load::<SIZE>(chunk), Visibility::Visible)).id();
+        // commands.entity(self.0).add_child(chunk);
     }
 }

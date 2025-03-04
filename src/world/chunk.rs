@@ -5,7 +5,7 @@ use std::{
 
 use bevy::{math::I64Vec3, prelude::*, render::{extract_component::{ExtractComponent, ExtractComponentPlugin}, Render, RenderApp}};
 
-use crate::render::buffers::{self, update_buffers, Cube, ToCubes};
+use crate::render::buffers::{self, update_buffers, write_buffers, Cube, ToCubes};
 
 use super::{block::BlockState, generation::BlockGenerator, propagate_chunk_offsets};
 
@@ -18,7 +18,10 @@ impl <const SIZE: usize> Plugin for ChunkPlugin<SIZE> {
         app.add_systems(PostUpdate, propagate_chunk_offsets::<SIZE>);
         app.get_sub_app_mut(RenderApp)
             .unwrap()
-            .add_systems(Render, buffers::update_chunk_buffers::<SIZE>.after(update_buffers));
+            .add_systems(Render, buffers::update_chunk_buffers::<SIZE>
+                .after(update_buffers)
+                .before(write_buffers)
+            );
     }
 }
 
@@ -31,6 +34,7 @@ const fn index_to_pos(index: usize, size: usize) -> IVec3 {
 }
 
 #[derive(Debug, Component)]
+#[require(Transform, Visibility)]
 pub struct Chunk<const SIZE: usize> {
     pub blocks: [[[BlockState; SIZE]; SIZE]; SIZE],
 }

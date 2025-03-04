@@ -21,7 +21,7 @@
 
 @group(0) @binding(0) var<uniform> view: View;
 
-@group(1) @binding(0) var<storage, read> triangles: array<mat4x4f>;
+@group(1) @binding(0) var<storage, read> cuboids: array<mat4x4f>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
@@ -115,8 +115,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     // Use an orthographic projection.
     var vertex_output: VertexOutput;
     var vertex_pos: vec4f = get_base_vertex(index);
-    vertex_pos *= triangles[index / VERTEX_COUNT];
-    let transform = triangles[index / VERTEX_COUNT];
+    vertex_pos = vertex_pos * cuboids[index / VERTEX_COUNT];
     vertex_output.world_position = vertex_pos;
     vertex_pos = view.clip_from_world * vertex_pos;
     vertex_output.clip_position = vertex_pos;
@@ -129,6 +128,8 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
       vertex_output.color = vec3f(0.0, 0.0, 1.0);
     }
     vertex_output.normal = get_base_normal(index);
+
+    vertex_output.color = vec3(0.5, 0.5, 1.0);
 
     return vertex_output;
 }
@@ -145,7 +146,7 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     pbr_input.V = calculate_view(vertex.world_position, false);
 
     // pbr_input.material.base_color = vec4f(0.5, 0.5, 1.0, 1.0);
-    pbr_input.material.base_color = vec4f(vertex.normal.xyz, 1.0);
+    pbr_input.material.base_color = vec4(vertex.color, 1.0);
     pbr_input.material.perceptual_roughness = 0.05;
 
     pbr_input.material.base_color = alpha_discard(
@@ -168,7 +169,7 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
 @vertex
 fn shadow_vertex(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
     var vertex_pos = get_base_vertex(index);
-    vertex_pos *= triangles[index / VERTEX_COUNT];
+    vertex_pos *= cuboids[index / VERTEX_COUNT];
     vertex_pos = view.clip_from_world * vertex_pos;
     return vertex_pos;
 }

@@ -11,7 +11,7 @@ use bevy::{
         Render, RenderApp, RenderSet,
     },
 };
-use buffers::{prepare_custom_phase_item_buffers, update_buffers, PulledCubesBuffers};
+use buffers::{prepare_custom_phase_item_buffers, update_buffers, write_buffers, PulledCubesBuffers};
 use pipeline::{
     queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline,
     DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
@@ -49,7 +49,8 @@ impl Plugin for VoxelRendererPlugin {
                 (
                     queue_custom_phase_item.in_set(RenderSet::Queue),
                     update_buffers,
-                ),
+                    write_buffers,
+                    ).chain(),
             );
     }
 

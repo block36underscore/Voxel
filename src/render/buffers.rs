@@ -18,7 +18,7 @@ use super::{
 };
 
 #[derive(Resource)]
-pub(crate) struct PulledCubesBuffers {
+pub struct PulledCubesBuffers {
     pub(crate) instances: BufferVec<Cube>,
 }
 
@@ -40,12 +40,8 @@ pub trait ToCubes {
     fn to_cubes(&self) -> Vec<Cube>;
 }
 
-pub(crate) fn update_buffers(
+pub fn update_buffers(
     mut buffers: ResMut<PulledCubesBuffers>,
-    render_device: Res<RenderDevice>,
-    render_queue: Res<RenderQueue>,
-    mut pipeline: ResMut<CubePullingPipeline>,
-    mut shadow_pipeline: ResMut<CubePullingShadowPipeline>,
     cubes: Query<(&PulledCube, &Transform, &ViewVisibility)>,
     chunks: Query<(&ExtractedChunk<16>, &Transform, &ViewVisibility)>,
 ) {
@@ -79,25 +75,9 @@ pub(crate) fn update_buffers(
                 buffers.instances.push(*cube);
             });
     }
-
-    buffers
-        .instances
-        .write_buffer(&render_device, &render_queue);
-
-    pipeline.bind_group = create_bind_group(
-        &render_device,
-        &pipeline.layout,
-        buffers.instances.buffer().unwrap(),
-    );
-
-    shadow_pipeline.bind_group = create_bind_group(
-        &render_device,
-        &pipeline.layout,
-        buffers.instances.buffer().unwrap(),
-    );
 }
 
-pub(crate) fn update_chunk_buffers<const SIZE: usize>(
+pub fn update_chunk_buffers<const SIZE: usize>(
     mut buffers: ResMut<PulledCubesBuffers>,
     chunks: Query<(&ExtractedChunk<SIZE>, &Transform, &ViewVisibility)>,
 ) {
@@ -119,6 +99,31 @@ pub(crate) fn update_chunk_buffers<const SIZE: usize>(
                 buffers.instances.push(*cube);
             });
     }
+}
+
+pub fn write_buffers(
+    mut buffers: ResMut<PulledCubesBuffers>,
+    render_device: Res<RenderDevice>,
+    render_queue: Res<RenderQueue>,
+    mut pipeline: ResMut<CubePullingPipeline>,
+    mut shadow_pipeline: ResMut<CubePullingShadowPipeline>,
+) {
+    buffers
+        .instances
+        .write_buffer(&render_device, &render_queue);
+
+
+    pipeline.bind_group = create_bind_group(
+            &render_device,
+            &pipeline.layout,
+            buffers.instances.buffer().unwrap(),
+        );
+
+        shadow_pipeline.bind_group = create_bind_group(
+            &render_device,
+            &pipeline.layout,
+            buffers.instances.buffer().unwrap(),
+        );
 }
 
 impl FromWorld for PulledCubesBuffers {

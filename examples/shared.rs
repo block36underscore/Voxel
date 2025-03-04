@@ -116,7 +116,7 @@ pub fn spawn_player(mut commands: Commands) {
     player.add_child(camera);
 }
 
-pub const SPEED: f32 = 5.0;
+pub const SPEED: f32 = 20.0;
 pub const LOOK_SPEED: f32 = 0.00075;
 
 pub fn handle_player_input(
