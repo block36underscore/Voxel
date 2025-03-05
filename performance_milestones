@@ -1,0 +1,7 @@
+The following tests were done rendering a 16x16 chunk
+generation::debug::sine::<8, 3, 10> world
+
+Baseline (3/4/25):
+    FPS: 20
+    CPU time: 0.01 ms
+    GPU time: 38 ms

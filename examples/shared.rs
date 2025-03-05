@@ -11,9 +11,16 @@ pub struct SharedUtilitiesPlugin;
 
 impl Plugin for SharedUtilitiesPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, (cursor_grab, spawn_player))
+        app.add_systems(Startup, (cursor_grab, spawn_player, spawn_perf_ui))
             .add_systems(Update, handle_player_input)
-            .add_plugins(InputManagerPlugin::<Action>::default());
+            .add_plugins((
+                InputManagerPlugin::<Action>::default(),
+                PerfUiPlugin,
+                bevy::diagnostic::FrameTimeDiagnosticsPlugin,
+                bevy::diagnostic::EntityCountDiagnosticsPlugin,
+                bevy::diagnostic::SystemInformationDiagnosticsPlugin,
+                bevy::render::diagnostic::RenderDiagnosticsPlugin,
+            ));
     }
 }
 
@@ -40,6 +47,7 @@ impl Actionlike for Action {
     }
 }
 
+use iyes_perf_ui::{prelude::{PerfUiAllEntries, PerfUiDefaultEntries, PerfUiEntryFPS}, PerfUiPlugin};
 use leafwing_input_manager::{
     plugin::InputManagerPlugin,
     prelude::{ActionState, InputMap, MouseMove},
@@ -172,4 +180,8 @@ pub fn handle_player_input(
         cursor.grab_mode = CursorGrabMode::Locked;
         cursor.visible = false;
     }
+}
+
+fn spawn_perf_ui(mut commands: Commands) {
+    commands.spawn(PerfUiAllEntries::default());
 }
