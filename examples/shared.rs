@@ -47,7 +47,7 @@ impl Actionlike for Action {
     }
 }
 
-use iyes_perf_ui::{prelude::{PerfUiAllEntries, PerfUiDefaultEntries, PerfUiEntryFPS}, PerfUiPlugin};
+use iyes_perf_ui::{prelude::PerfUiAllEntries, PerfUiPlugin};
 use leafwing_input_manager::{
     plugin::InputManagerPlugin,
     prelude::{ActionState, InputMap, MouseMove},

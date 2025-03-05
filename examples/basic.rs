@@ -2,7 +2,7 @@ mod shared;
 
 use bevy::{math::{I64Vec3, Vec3A}, pbr::CascadeShadowConfigBuilder, prelude::*, render::primitives::Aabb};
 use shared::SharedUtilitiesPlugin;
-use vkxl::{world::{chunk::Chunk16, generation, Level, Load}, VoxelPlugin};
+use vkxl::{world::{generation, Level, Load}, VoxelPlugin};
 
 fn main() {
     let mut app = App::new();
