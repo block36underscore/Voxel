@@ -3,27 +3,36 @@
 // This shader goes with the `custom_phase_item` example. It demonstrates how to
 // enqueue custom rendering logic in a `RenderPhase`.
 
-#import bevy_render::view::View
+
+#import bevy_render::view::View;
 
 #import bevy_pbr::{
     forward_io::FragmentOutput,
     pbr_functions::{apply_pbr_lighting, main_pass_post_lighting_processing, calculate_view},
     pbr_types::STANDARD_MATERIAL_FLAGS_UNLIT_BIT,
     mesh_types::{MESH_FLAGS_TRANSMITTED_SHADOW_RECEIVER_BIT, MESH_FLAGS_SHADOW_RECEIVER_BIT},
-}
+};
 
 #import bevy_pbr::{
     pbr_functions::alpha_discard,
     pbr_fragment::pbr_input_from_standard_material,
     pbr_types::pbr_input_new,
     shadows,
-}
+};
 
 @group(0) @binding(0)
 var<uniform> view: View;
 
+struct CubeArray {
+  arr: array<Cube>,
+}
+
+struct Cube {
+  transform: mat4x4f,
+}
+
 @group(1) @binding(0)
-var chunks: binding_array<array<mat4x4f>>;
+var<storage, read> chunks: binding_array<CubeArray, 16>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
@@ -125,8 +134,8 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
 
     let instance = index / VERTEX_COUNT;
     let axis = (index - instance) / 6;
-    var cube_pos = (vec4(0, 0, 0, 1) * chunks[0][instance])[axis];
-    var axis_test = (TEST_AXIS[axis] * chunks[0][instance])[axis];
+    var cube_pos = (vec4(0, 0, 0, 1) * chunks[0].arr[instance].transform)[axis];
+    var axis_test = (TEST_AXIS[axis] * chunks[0].arr[instance].transform)[axis];
     let sign = sign(cube_pos);
     axis_test *= sign;
     cube_pos *= sign;
@@ -136,7 +145,8 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     }
 
     var vertex_pos: vec4f = get_base_vertex(vertex);
-    vertex_pos = vertex_pos * chunks[0][index / VERTEX_COUNT];
+    vertex_pos = vertex_pos *
+                 chunks[0].arr[index / VERTEX_COUNT].transform;
     vertex_output.world_position = vertex_pos;
     vertex_pos = view.clip_from_world * vertex_pos;
     vertex_output.clip_position = vertex_pos;

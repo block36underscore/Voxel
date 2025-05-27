@@ -410,10 +410,8 @@ where
 
         pass.set_bind_group(1, &pipeline.bind_group, &[]);
 
-        println!("draw");
-
         pass.draw(
-            0..3, 0..1
+            0..(3 * 2 * 3), 0..1
         );
         //pass.draw(
         //    0..(custom_phase_item_buffers.instances.len() as u32 * VERTICES_PER_CUBE),
