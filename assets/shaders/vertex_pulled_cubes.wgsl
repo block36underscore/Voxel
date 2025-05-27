@@ -19,9 +19,11 @@
     shadows,
 }
 
-@group(0) @binding(0) var<uniform> view: View;
+@group(0) @binding(0)
+var<uniform> view: View;
 
-@group(1) @binding(0) var<storage, read> cuboids: array<mat4x4f>;
+@group(1) @binding(0)
+var chunks: binding_array<array<mat4x4f>>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
@@ -99,7 +101,13 @@ const NORMALS = array<vec3f, 6> (
   vec3f( 0.0, 0.0,-1.0),
 );
 
-const VERTEX_COUNT: u32 = 36;
+const TEST_AXIS = array<vec4f, 3> (
+    vec4f(1.0, 0.0, 0.0, 1.0),
+    vec4f(0.0, 1.0, 0.0, 1.0),
+    vec4f(0.0, 0.0, 1.0, 1.0),
+);
+
+const VERTEX_COUNT: u32 = 18;
 
 fn get_base_vertex(index: u32) -> vec4f {
   return vec4f(VERTICES[index % VERTEX_COUNT], 1.0);
@@ -114,8 +122,21 @@ fn get_base_normal(index: u32) -> vec3f {
 fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     // Use an orthographic projection.
     var vertex_output: VertexOutput;
-    var vertex_pos: vec4f = get_base_vertex(index);
-    vertex_pos = vertex_pos * cuboids[index / VERTEX_COUNT];
+
+    let instance = index / VERTEX_COUNT;
+    let axis = (index - instance) / 6;
+    var cube_pos = (vec4(0, 0, 0, 1) * chunks[0][instance])[axis];
+    var axis_test = (TEST_AXIS[axis] * chunks[0][instance])[axis];
+    let sign = sign(cube_pos);
+    axis_test *= sign;
+    cube_pos *= sign;
+    var vertex = axis * 12 + (index % 6);
+    if (f32(axis) > cube_pos) {
+        vertex = vertex + 6;
+    }
+
+    var vertex_pos: vec4f = get_base_vertex(vertex);
+    vertex_pos = vertex_pos * chunks[0][index / VERTEX_COUNT];
     vertex_output.world_position = vertex_pos;
     vertex_pos = view.clip_from_world * vertex_pos;
     vertex_output.clip_position = vertex_pos;
@@ -166,15 +187,15 @@ fn fragment(vertex: VertexOutput) -> @location(0) vec4f {
     return main_pass_post_lighting_processing(pbr_input, out.color);
 }
 
-@vertex
-fn shadow_vertex(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
-    var vertex_pos = get_base_vertex(index);
-    vertex_pos *= cuboids[index / VERTEX_COUNT];
-    vertex_pos = view.clip_from_world * vertex_pos;
-    return vertex_pos;
-}
-
-@fragment
-fn shadow_fragment(@builtin(position) clip_pos: vec4f) {
-    return;
-}
+// @vertex
+// fn shadow_vertex(@builtin(vertex_index) index: u32) -> @builtin(position) vec4f {
+//     var vertex_pos = get_base_vertex(index);
+//     vertex_pos *= cuboids[index / VERTEX_COUNT];
+//     vertex_pos = view.clip_from_world * vertex_pos;
+//     return vertex_pos;
+// }
+// 
+// @fragment
+// fn shadow_fragment(@builtin(position) clip_pos: vec4f) {
+//     return;
+// }

@@ -4,7 +4,7 @@ use bevy::{
     app::{App, Plugin},
     prelude::*,
     reflect::Reflect,
-    window::{CursorGrabMode, PrimaryWindow},
+    window::CursorGrabMode,
 };
 
 pub struct SharedUtilitiesPlugin;
@@ -16,7 +16,10 @@ impl Plugin for SharedUtilitiesPlugin {
             .add_plugins((
                 InputManagerPlugin::<Action>::default(),
                 PerfUiPlugin,
-                bevy::diagnostic::FrameTimeDiagnosticsPlugin,
+                bevy::diagnostic::FrameTimeDiagnosticsPlugin {
+                    max_history_length: 300,
+                    smoothing_factor: 2.0 / (300.0 + 1.0),
+                },
                 bevy::diagnostic::EntityCountDiagnosticsPlugin,
                 bevy::diagnostic::SystemInformationDiagnosticsPlugin,
                 bevy::render::diagnostic::RenderDiagnosticsPlugin,
@@ -94,10 +97,11 @@ pub fn setup_controls() -> InputMap<Action> {
     map
 }
 
-pub fn cursor_grab(mut q_windows: Query<&mut Window, With<PrimaryWindow>>) {
-    let mut primary_window = q_windows.single_mut();
-    primary_window.cursor_options.grab_mode = CursorGrabMode::Locked;
-    primary_window.cursor_options.visible = false;
+pub fn cursor_grab(
+    mut window: Single<&mut Window>,
+) {
+    window.cursor_options.grab_mode = CursorGrabMode::Locked;
+    window.cursor_options.visible = false;
 }
 
 #[derive(Component)]
@@ -128,13 +132,12 @@ pub const SPEED: f32 = 20.0;
 pub const LOOK_SPEED: f32 = 0.00075;
 
 pub fn handle_player_input(
-    mut player: Query<(&ActionState<Action>, &mut Transform), With<Player>>,
-    mut camera: Query<&mut Transform, (With<Camera>, Without<Player>)>,
-    mut q_windows: Query<&mut Window, With<PrimaryWindow>>,
+    mut player: Single<(&ActionState<Action>, &mut Transform), With<Player>>,
+    mut camera_transform: Single<&mut Transform, (With<Camera>, Without<Player>)>,
+    mut window: Single<&mut Window>,
     time: Res<Time>,
 ) {
-    let (action_state, mut player_transform) = player.single_mut();
-    let mut camera_transform = camera.single_mut();
+    let action_state = player.0;
     let (mut yaw, mut pitch, _) = camera_transform.rotation.to_euler(EulerRot::YXZ);
 
     // Movement Inputs
@@ -150,11 +153,10 @@ pub fn handle_player_input(
     }
 
     velocity = velocity.normalize_or_zero();
-    player_transform.translation += velocity * time.delta().as_secs_f32() * SPEED;
+    player.1.translation += velocity * time.delta().as_secs_f32() * SPEED;
 
     // Camera Inputs
 
-    let window = &mut q_windows.single_mut();
     let cursor = &mut window.cursor_options;
     let camera_delta = action_state.axis_pair(&Action::Pan);
 

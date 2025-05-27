@@ -38,7 +38,7 @@ pub trait Load {
 
 impl Load for (Entity, &Level) {
     fn load<const SIZE: usize>(&mut self, chunk: I64Vec3, commands: &mut Commands) {
-        let chunk = commands.spawn((self.1.load::<SIZE>(chunk), Visibility::Visible)).id();
+        let _chunk = commands.spawn((self.1.load::<SIZE>(chunk), Visibility::Visible)).id();
         // commands.entity(self.0).add_child(chunk);
     }
 }

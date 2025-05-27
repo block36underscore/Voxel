@@ -4,14 +4,10 @@ use bevy::{
     pbr::Shadow,
     prelude::*,
     render::{
-        extract_component::{ExtractComponent, ExtractComponentPlugin},
-        render_phase::AddRenderCommand,
-        render_resource::SpecializedRenderPipelines,
-        view::{self, VisibilitySystems},
-        Render, RenderApp, RenderSet,
+        extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, renderer::RenderDevice, settings::WgpuFeatures, view::{self, VisibilitySystems}, Render, RenderApp, RenderSet
     },
 };
-use buffers::{prepare_custom_phase_item_buffers, update_buffers, write_buffers, PulledCubesBuffers};
+use buffers::{prepare_custom_phase_item_buffers, update_buffers, write_buffers, PulledCubesBuffers, PulledCubesBufferArrays};
 use pipeline::{
     queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline,
     DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
@@ -29,17 +25,13 @@ impl Plugin for VoxelRendererPlugin {
         app.add_plugins((
             ExtractComponentPlugin::<PulledCube>::default(),
             ChunkPlugin::<16>,
-        ))
-        .add_systems(
-            PostUpdate,
-            (view::check_visibility::<WithCustomRenderedEntity>
-                .in_set(VisibilitySystems::CheckVisibility),),
-        );
+            GpuFeatureSupportChecker,
+        ));
 
         app.get_sub_app_mut(RenderApp)
             .unwrap()
             .add_render_command::<Opaque3d, DrawPulledCubesCommands>()
-            .add_render_command::<Shadow, DrawPulledCubesPrepassCommands>()
+//            .add_render_command::<Shadow, DrawPulledCubesPrepassCommands>()
             .add_systems(
                 Render,
                 prepare_custom_phase_item_buffers.in_set(RenderSet::Prepare),
@@ -57,11 +49,40 @@ impl Plugin for VoxelRendererPlugin {
     fn finish(&self, app: &mut App) {
         app.get_sub_app_mut(RenderApp)
             .expect("RenderApp does not exist")
+            .init_resource::<PulledCubesBufferArrays>()
             .init_resource::<PulledCubesBuffers>()
             .init_resource::<CubePullingPipeline>()
-            .init_resource::<CubePullingShadowPipeline>()
-            .init_resource::<SpecializedRenderPipelines<CubePullingPipeline>>()
-            .init_resource::<SpecializedRenderPipelines<CubePullingShadowPipeline>>();
+//            .init_resource::<CubePullingShadowPipeline>()
+            .init_resource::<SpecializedRenderPipelines<CubePullingPipeline>>();
+//            .init_resource::<SpecializedRenderPipelines<CubePullingShadowPipeline>>();
+    }
+}
+
+
+struct GpuFeatureSupportChecker;
+
+impl Plugin for GpuFeatureSupportChecker {
+    fn build(&self, _app: &mut App) {}
+
+    fn finish(&self, app: &mut App) {
+        let Some(render_app) = app.get_sub_app_mut(RenderApp) else {
+            return;
+        };
+
+        let render_device = render_app.world().resource::<RenderDevice>();
+
+        // Check if the device support the required feature. If not, exit the example.
+        // In a real application, you should setup a fallback for the missing feature
+        if !render_device
+            .features()
+            .contains(WgpuFeatures::SAMPLED_TEXTURE_AND_STORAGE_BUFFER_ARRAY_NON_UNIFORM_INDEXING)
+        {
+            panic!(
+"Render device doesn't support feature \
+SAMPLED_TEXTURE_AND_STORAGE_BUFFER_ARRAY_NON_UNIFORM_INDEXING, \
+which is required for texture binding arrays"
+            );
+        }
     }
 }
 
