@@ -13,7 +13,7 @@ use bytemuck::{Pod, Zeroable};
 use crate::world::chunk::ExtractedChunk;
 
 use super::{
-    pipeline::{create_bind_group, CubePullingPipeline, CubePullingShadowPipeline},
+    pipeline::{create_bind_group, CubePullingPipeline},
     PulledCube,
 };
 

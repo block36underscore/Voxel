@@ -1,16 +1,15 @@
 use bevy::{
-    app::{App, Plugin, PostUpdate},
+    app::{App, Plugin},
     core_pipeline::core_3d::Opaque3d,
-    pbr::Shadow,
     prelude::*,
     render::{
-        extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, renderer::RenderDevice, settings::WgpuFeatures, view::{self, VisibilitySystems}, Render, RenderApp, RenderSet
+        extract_component::{ExtractComponent, ExtractComponentPlugin}, render_phase::AddRenderCommand, render_resource::SpecializedRenderPipelines, renderer::RenderDevice, settings::WgpuFeatures, Render, RenderApp, RenderSet
     },
 };
 use buffers::{prepare_custom_phase_item_buffers, update_buffers, write_buffers, PulledCubesBuffers, PulledCubesBufferArrays};
 use pipeline::{
-    queue_custom_phase_item, CubePullingPipeline, CubePullingShadowPipeline,
-    DrawPulledCubesCommands, DrawPulledCubesPrepassCommands, WithCustomRenderedEntity,
+    queue_custom_phase_item, CubePullingPipeline,
+    DrawPulledCubesCommands,
 };
 
 use crate::world::chunk::ChunkPlugin;

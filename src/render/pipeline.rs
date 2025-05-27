@@ -1,4 +1,3 @@
-use std::num::NonZero;
 
 use bevy::{
     asset::Handle,
@@ -9,7 +8,7 @@ use bevy::{
     pbr::{
         ExtractedDirectionalLight, ExtractedPointLight, LightEntity, MeshPipeline, MeshPipelineKey,
         RenderCascadesVisibleEntities, RenderCubemapVisibleEntities, RenderVisibleMeshEntities,
-        SetMeshViewBindGroup, SetPrepassViewBindGroup, Shadow, ShadowBinKey, ViewLightEntities,
+        SetMeshViewBindGroup, SetPrepassViewBindGroup, ViewLightEntities,
     },
     prelude::*,
     render::{
@@ -27,11 +26,11 @@ use bevy::{
         },
         renderer::RenderDevice,
         sync_world::MainEntity,
-        view::{ExtractedView, RetainedViewEntity, ViewUniform},
+        view::{ExtractedView, ViewUniform},
     },
 };
 
-use super::{buffers::{PulledCubesBufferArrays, PulledCubesBuffers, MAX_CHUNK_COUNT}, PulledCube};
+use super::{buffers::{PulledCubesBufferArrays, PulledCubesBuffers}, PulledCube};
 
 pub(crate) type DrawPulledCubesPrepassCommands = (
     SetItemPipeline,
