@@ -17,7 +17,7 @@ use super::{
     PulledCube,
 };
 
-pub const MAX_CHUNK_COUNT : u32 = 16;
+pub const MAX_CHUNK_COUNT : u32 = 256;
 
 #[derive(Resource)]
 pub struct PulledCubesBuffers {

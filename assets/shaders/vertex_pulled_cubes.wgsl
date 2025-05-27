@@ -32,7 +32,7 @@ struct Cube {
 }
 
 @group(1) @binding(0)
-var<storage, read> chunks: binding_array<CubeArray, 16>;
+var<storage, read> chunks: binding_array<CubeArray, 256>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
