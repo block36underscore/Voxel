@@ -132,10 +132,12 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     // Use an orthographic projection.
     var vertex_output: VertexOutput;
 
+    let chunk_num = 0;
+
     let instance = index / VERTEX_COUNT;
     let axis = (index - instance) / 6;
-    var cube_pos = (vec4(0, 0, 0, 1) * chunks[0].arr[instance].transform)[axis];
-    var axis_test = (TEST_AXIS[axis] * chunks[0].arr[instance].transform)[axis];
+    var cube_pos = (vec4(0, 0, 0, 1) * chunks[chunk_num].arr[instance].transform)[axis];
+    var axis_test = (TEST_AXIS[axis] * chunks[chunk_num].arr[instance].transform)[axis];
     let sign = sign(cube_pos);
     axis_test *= sign;
     cube_pos *= sign;
@@ -146,7 +148,7 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
 
     var vertex_pos: vec4f = get_base_vertex(vertex);
     vertex_pos = vertex_pos *
-                 chunks[0].arr[index / VERTEX_COUNT].transform;
+                 chunks[chunk_num].arr[index / VERTEX_COUNT].transform;
     vertex_output.world_position = vertex_pos;
     vertex_pos = view.clip_from_world * vertex_pos;
     vertex_output.clip_position = vertex_pos;

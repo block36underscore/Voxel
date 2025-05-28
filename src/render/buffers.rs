@@ -81,7 +81,6 @@ impl PulledCubesBufferArrays {
         let handles = self
             .chunk_instances
             .iter()
-            .take(MAX_CHUNK_COUNT as usize)
             .map(|buffer| buffer
                     .buffer()
                     .unwrap()
@@ -91,7 +90,7 @@ impl PulledCubesBufferArrays {
         render_device.create_bind_group(
             "main_chunk_buffers",
             &self.chunks_layout,
-            &BindGroupEntries::single(BindingResource::BufferArray(&handles[..]))
+            &BindGroupEntries::single(BindingResource::BufferArray(handles.as_slice()))
         )
     }
 
