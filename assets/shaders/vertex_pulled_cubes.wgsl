@@ -32,7 +32,7 @@ struct Cube {
 }
 
 @group(1) @binding(0)
-var<storage, read> chunks: binding_array<CubeArray, 256>;
+var<storage, read> chunks: binding_array<CubeArray>;
 
 // Information passed from the vertex shader to the fragment shader.
 struct VertexOutput {
@@ -132,9 +132,10 @@ fn vertex(@builtin(vertex_index) index: u32) -> VertexOutput {
     // Use an orthographic projection.
     var vertex_output: VertexOutput;
 
-    let chunk_num = 0;
+    let chunk_num = index % 2;
 
-    let instance = index / VERTEX_COUNT;
+    var instance = index / VERTEX_COUNT;
+    instance += 0;
     let axis = (index - instance) / 6;
     var cube_pos = (vec4(0, 0, 0, 1) * chunks[chunk_num].arr[instance].transform)[axis];
     var axis_test = (TEST_AXIS[axis] * chunks[chunk_num].arr[instance].transform)[axis];
